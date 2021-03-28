@@ -3,7 +3,9 @@ Fast Word Mover's Distance [![Build Status](https://travis-ci.com/src-d/wmd-rela
 
 Calculates Word Mover's Distance as described in
 [From Word Embeddings To Document Distances](http://www.cs.cornell.edu/~kilian/papers/wmd_metric.pdf)
-by Matt Kusner, Yu Sun, Nicholas Kolkin and Kilian Weinberger.
+by Matt Kusner, Yu Sun, Nicholas Kolkin and Kilian Weinberger. 
+
+Modified by Thais to work using concatenation of word embeddings.
 
 <img src="doc/wmd.png" alt="Word Mover's Distance" width="200"/>
 
