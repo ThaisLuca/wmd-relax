@@ -628,24 +628,26 @@ class WMD(object):
             doc.user_span_hooks["similarity"] = self.compute_similarity
             return doc
 
-        def compute_similarity(self, doc1, doc2):
+        def compute_similarity(self, doc1, doc2, evec=[], single_vector=False):
             """
             Calculates the similarity between two spaCy documents. Extracts the
             nBOW from them and evaluates the WMD.
 
             :return: The calculated similarity.
             :rtype: float.
-            """
+            """ 
             doc1 = self._convert_document(doc1)
             doc2 = self._convert_document(doc2)
             vocabulary = {
                 w: i for i, w in enumerate(sorted(set(doc1).union(doc2)))}
             w1 = self._generate_weights(doc1, vocabulary)
             w2 = self._generate_weights(doc2, vocabulary)
-            evec = numpy.zeros((len(vocabulary), self.nlp.vocab.vectors_length),
+            
+            if not single_vector:
+                evec = numpy.zeros((len(vocabulary), self.nlp.vocab.vectors_length),
                                dtype=numpy.float32)
-            for w, i in vocabulary.items():
-                evec[i] = self.nlp.vocab[w].vector
+                for w, i in vocabulary.items():
+                    evec[i] = self.nlp.vocab[w].vector
             evec_sqr = (evec * evec).sum(axis=1)
             dists = evec_sqr - 2 * evec.dot(evec.T) + evec_sqr[:, numpy.newaxis]
             dists[dists < 0] = 0
@@ -657,8 +659,8 @@ class WMD(object):
             for t in doc:
                 if self.only_alpha and not t.is_alpha:
                     continue
-                if self.ignore_stops and t.is_stop:
-                    continue
+                #if self.ignore_stops and t.is_stop:
+                #    continue
                 words[t.orth] += 1
             return {t: self.frequency_processor(t, v) for t, v in words.items()}
 
