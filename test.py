@@ -144,6 +144,5 @@ class TailVocabularyOptimizerTests(Base):
         self.assertEqual(ret_words[sorter], numpy.array([11, 33, 44, 55, 77]))
         self.assertEqual(ret_weights[sorter], numpy.array([0.5, 0.4, 0.8, 0.6, 0.7]))
 
-
 if __name__ == "__main__":
     unittest.main()

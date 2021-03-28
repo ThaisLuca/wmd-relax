@@ -19,7 +19,7 @@ extension can be built as a generic shared library not related to Python at all.
 ### Installation
 
 ```
-pip3 install wmd
+pip3 install git+git://github.com/ThaisLuca/wmd-relax
 ```
 Tested on Linux and macOS.
 
@@ -29,63 +29,31 @@ You should have the embeddings numpy array and the nbow model - that is,
 every sample is a weighted set of items, and every item is embedded.
 
 ```python
-import numpy
-from wmd import WMD
-
-embeddings = numpy.array([[0.1, 1], [1, 0.1]], dtype=numpy.float32)
-nbow = {"first":  ("#1", [0, 1], numpy.array([1.5, 0.5], dtype=numpy.float32)),
-        "second": ("#2", [0, 1], numpy.array([0.75, 0.15], dtype=numpy.float32))}
-calc = WMD(embeddings, nbow, vocabulary_min=2)
-print(calc.nearest_neighbors("first"))
-```
-```
-[('second', 0.10606599599123001)]
-```
-
-`embeddings` must support `__getitem__` which returns an item by it's
-identifier; particularly, `numpy.ndarray` matches that interface.
-`nbow` must be iterable - returns sample identifiers - and support
-`__getitem__` by those identifiers which returns tuples of length 3.
-The first element is the human-readable name of the sample, the
-second is an iterable with item identifiers and the third is `numpy.ndarray`
-with the corresponding weights. All numpy arrays must be float32. The return
-format is the list of tuples with sample identifiers and relevancy
-indices (lower the better).
-
-It is possible to use this package with [spaCy](https://github.com/explosion/spaCy):
-
-```python
+import numpy as np
 import spacy
 import wmd
 
-nlp = spacy.load('en_core_web_md')
-nlp.add_pipe(wmd.WMD.SpacySimilarityHook(nlp), last=True)
-doc1 = nlp("Politician speaks to the media in Illinois.")
-doc2 = nlp("The president greets the press in Chicago.")
-print(doc1.similarity(doc2))
+doc1 = 'company has office'
+doc2 = 'team plays for league'
+
+# Load your pre-trained SpaCy model
+nlp = spacy.blank("en").from_disk('spacy')
+
+# Instanciate SpacySimilarityHook using the pre-trained model
+wmd_instance = wmd.WMD.SpacySimilarityHook(nlp)
+
+# Generate word embeddings using concatenation to obtain single vectors
+embeddings = [np.concatenate([nlp.vocab[w].vector for w in doc1.split()]), 
+np.concatenate([nlp.vocab[w].vector for w in doc2.split()])]
+
+# Fix document 1 to be the same size as document 2 (as len(doc2) > len(doc1)). Fill it up with zeros.
+dimension = 300 # vectors length 
+dim = dimension * ((len(embeddings[1]) - len(embeddings[0]))//dimension)
+embeddings[0], embeddings[1] =  np.concatenate((embeddings[0], np.zeros(dim))), embeddings[1]
+
+# Calculate similarity
+print(wmd_instance.compute_similarity(nlp("companyhasoffice"), nlp("teamplaysforleague"), evec=np.array(embeddings, dtype=np.float32), single_vector=True))
 ```
-
-Besides, see another [example](spacy_example.py) which finds similar Wikipedia
-pages.
-
-### Building from source
-
-Either build it as a Python package:
-
-```
-pip3 install git+https://github.com/src-d/wmd-relax
-```
-
-or use CMake:
-
-```
-git clone --recursive https://github.com/src-d/wmd-relax
-cmake -D CMAKE_BUILD_TYPE=Release .
-make -j
-```
-
-Please note the `--recursive` flag for `git clone`. This project uses source{d}'s
-fork of [google/or-tools](https://github.com/google/or-tools) as the git submodule.
 
 ### Tests
 
